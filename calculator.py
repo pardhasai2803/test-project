@@ -1,18 +1,23 @@
 def add(a: float, b: float) -> float:
+    """Returns the sum of two numbers."""
     return a + b
 
 def subtract(a: float, b: float) -> float:
+    """Returns the difference of two numbers."""
     return a - b
 
 def multiply(a: float, b: float) -> float:
+    """Returns the product of two numbers."""
     return a * b
 
 def divide(a: float, b: float) -> float:
+    """Returns the quotient of two numbers or raises ValueError if division by zero."""
     if b == 0:
         raise ValueError("Error: Division by zero is not allowed.")
     return a / b
 
 def main():
+    """Program to perform basic arithmetic operations."""
     print("Calculator Program")
     print("1. Addition")
     print("2. Subtraction")
@@ -37,7 +42,7 @@ def main():
         except ValueError as e:
             print(str(e))
     else:
-        print("Invalid choice.")
+        print("Invalid choice.')
 
 if __name__ == "__main__":
     main()
