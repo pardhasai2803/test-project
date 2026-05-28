@@ -1,21 +1,31 @@
 #include <iostream>
+#include <stdexcept>
+
 using namespace std;
 
 int add(int a, int b) {
+    // Time complexity: O(1)
+    // Space complexity: O(1)
     return a + b;
 }
 
 int subtract(int a, int b) {
+    // Time complexity: O(1)
+    // Space complexity: O(1)
     return a - b;
 }
 
 int multiply(int a, int b) {
+    // Time complexity: O(1)
+    // Space complexity: O(1)
     return a * b;
 }
 
 double divide(int a, int b) {
+    // Time complexity: O(1)
+    // Space complexity: O(1)
     if (b == 0) {
-        throw runtime_error("Division by zero");
+        throw logic_error("Division by zero");
     }
     return (double)a / b;
 }
