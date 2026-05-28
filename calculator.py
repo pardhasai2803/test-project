@@ -49,13 +49,11 @@ def divide(a: float, b: float) -> float:
         float: The quotient of a and b.
 
     Raises:
-        ZeroDivisionError: If b is zero.
+        ValueError: If b is zero.
     """
-    try:
-        return a / b
-    except ZeroDivisionError:
-        print("Error: Division by zero is not allowed.")
-        return None
+    if b == 0:
+        raise ValueError("Error: Division by zero is not allowed.")
+    return a / b
 
 def main():
     print("Calculator Program")
@@ -67,19 +65,20 @@ def main():
     choice = input("Enter your choice (1/2/3/4): ")
 
     if choice in ['1', '2', '3', '4']:
-        num1 = float(input("Enter first number: "))
-        num2 = float(input("Enter second number: "))
+        try:
+            num1 = float(input("Enter first number: "))
+            num2 = float(input("Enter second number: "))
 
-        if choice == '1':
-            print(f"Result: {add(num1, num2)}")
-        elif choice == '2':
-            print(f"Result: {subtract(num1, num2)}")
-        elif choice == '3':
-            print(f"Result: {multiply(num1, num2)}")
-        elif choice == '4':
-            result = divide(num1, num2)
-            if result is not None:
-                print(f"Result: {result}")
+            if choice == '1':
+                print(f"Result: {add(num1, num2)}")
+            elif choice == '2':
+                print(f"Result: {subtract(num1, num2)}")
+            elif choice == '3':
+                print(f"Result: {multiply(num1, num2)}")
+            elif choice == '4':
+                print(f"Result: {divide(num1, num2)}")
+        except ValueError as e:
+            print(str(e))
     else:
         print("Invalid choice.")
 
