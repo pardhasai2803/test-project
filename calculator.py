@@ -1,17 +1,70 @@
 def add(a: float, b: float) -> float:
-    """Returns the sum of two numbers."""
+    """Returns the sum of two numbers.
+
+    Args:
+    a (float): First number.
+    b (float): Second number.
+
+    Returns:
+    float: Sum of a and b.
+
+    Example:
+    >>> add(5, 7)
+    12
+    """
     return a + b
 
 def subtract(a: float, b: float) -> float:
-    """Returns the difference of two numbers."""
+    """Returns the difference of two numbers.
+
+    Args:
+    a (float): First number.
+    b (float): Second number.
+
+    Returns:
+    float: Difference of a and b.
+
+    Example:
+    >>> subtract(7, 5)
+    2
+    """
     return a - b
 
 def multiply(a: float, b: float) -> float:
-    """Returns the product of two numbers."""
+    """Returns the product of two numbers.
+
+    Args:
+    a (float): First number.
+    b (float): Second number.
+
+    Returns:
+    float: Product of a and b.
+
+    Example:
+    >>> multiply(5, 7)
+    35.0
+    """
     return a * b
 
 def divide(a: float, b: float) -> float:
-    """Returns the quotient of two numbers or raises ValueError if division by zero."""
+    """Returns the quotient of two numbers or raises ValueError if division by zero.
+
+    Args:
+    a (float): First number.
+    b (float): Second number.
+
+    Returns:
+    float: Quotient of a and b.
+
+    Raises:
+    ValueError: If b is zero.
+
+    Example:
+    >>> divide(10, 2)
+    5.0
+    >>> divide(10, 0)
+    ZeroDivisionError: Error: Division by zero is not allowed.
+    """
     if b == 0:
         raise ValueError("Error: Division by zero is not allowed.")
     return a / b
@@ -42,7 +95,7 @@ def main():
         except ValueError as e:
             print(str(e))
     else:
-        print("Invalid choice.')
+        print("Invalid choice.")
 
 if __name__ == "__main__":
     main()
