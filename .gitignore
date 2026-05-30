@@ -1,0 +1,12 @@
+*.idea/
+*.vscode/
+*.gitignore
+# Ignore node_modules
+node_modules/
+# Ignore log files
+*.log
+# Ignore env files
+*.env
+# Ignore operating system files
+.DS_Store
+Thumbs.db
