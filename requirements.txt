@@ -1,0 +1,8 @@
+from os import path
+
+def add_requirements_txt():
+    # Create requirements.txt if it doesn't exist
+    if not path.exists('requirements.txt'):
+        open('requirements.txt', 'w').close()
+        return True
+    return False
