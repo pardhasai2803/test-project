@@ -1,14 +1,11 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
+import os
 
 # # Take data from a file
-# def get_data(filepath):
-#     # start_time = time.time()
-#     df = pd.read_csv(filepath)
-#     # df.head()
-#     return  df
-
+def get_data(filepath):
+    return  pd.read_csv(filepath)
 
 # Calculating cosine similarity
 def cosine_similarity(x, y):
@@ -26,7 +23,7 @@ def k_means(n_clusters, df):
 
     mean_points = []
     for i in init_points.values:
-        mean_points.append(i[1:11])
+        mean_points.append(i[1:11].tolist())
 
     # Running K-means 20 times
     final_clusters = [[] for j in range(k)]
@@ -37,7 +34,7 @@ def k_means(n_clusters, df):
             distances = [cosine_similarity(point[1:11], mean) for mean in mean_points]
             nearest_mean_index = np.argmax(distances)
             clusters[nearest_mean_index].append(point)
-            y[nearest_mean_index].append(point[1:11])
+            y[nearest_mean_index].append(point[1:11].tolist())
 
         for j in range(k):
             if len(clusters[j]) > 0:
@@ -92,7 +89,7 @@ def kmeans_to_file(n_clusters, final_clusters, filename):
     for j in range(n_clusters):
         user_count = 0
         for point in final_clusters[j]:
-            x = point[0]
+            x = str(point[0])
             x = x[5:]
             if user_count == 0:
                 f.write(x)
@@ -132,13 +129,12 @@ def agglomerative_to_file(n_clusters, clusters, filename):
     for j in range(n_clusters):
         user_count = 0
         for point in clusters[j]:
-            x = point + 1
+            x = str(point) + "1"
             if user_count == 0:
-                f.write(str(x))
+                f.write(x)
             else:
-                x = point + 1
                 f.write(", ")
-                f.write(str(x))
+                f.write(x)
             user_count += 1
         if j < n_clusters-1:
             f.write("\n")
@@ -146,21 +142,37 @@ def agglomerative_to_file(n_clusters, clusters, filename):
 
 
 def jaccard_coefficients(file1, file2, n_clusters):
+    os.system(f"mkdir -p results")
+
+    try:
+        os.remove(f"results/jaccard_similarities.txt")
+    except OSError:
+        pass
+
+
     # Reading data from kmeans.txt and storing it in result1
-    with open(file1, "r") as f:
+    with open('results/kmeans.txt', "r") as f:
         lines = [line.strip().split(",") for line in f.readlines()]
     for i in range(len(lines)):
         if lines[i][0] == '':
             lines[i][0] = '981'
     result1 = [[int(x) for x in line] for line in lines]
+    if os.path.exists(file1):
+        os.remove(file1)
+    kmeans_to_file(n_clusters,clusters_dict[n_clusters],"kmeans.txt")
+
 
     # Reading data from agglomerative.txt and storing it in result1
-    with open(file2, "r") as f:
+    with open('results/agglomerative.txt', "r") as f:
         lines = [line.strip().split(",") for line in f.readlines()]
     for i in range(len(lines)):
         if lines[i][0] == '':
             lines[i][0] = '981'
     result2 = [[int(x) for x in line] for line in lines]
+    if os.path.exists(file2):
+        os.remove(file2)
+    agglomerative_to_file(n_clusters,agglo_clusters[n_clusters],"agglomerative.txt")
+
 
     # Calculating Jaccard Similarity for each corresponding cluster
     jaccard_list = []
@@ -174,11 +186,17 @@ def jaccard_coefficients(file1, file2, n_clusters):
             jaccard_similarity = intersection / union
             jaccard_similarities.append(jaccard_similarity)
         jaccard_list.append(jaccard_similarities)
+
+    with open(f'results/jaccard_similarities.txt', "a+") as f:
+        for i in range(n_clusters):
+            avg = sum(jaccard_list[i])/len(jaccard_list[i])
+            f.write(f'Jaccard Similarities for cluster {i}: {avg}\n')
+    print('Jaccard Similarities were logged in results/jaccard_similarities.txt')
     return jaccard_list
 
 
 if __name__ == "__main__":
-    df = pd.read_csv('travel.csv')
+    df = get_data('travel.csv')
     clusters_dict = {}
     max_silhouette = -2
     optim_clusters = -1
@@ -197,7 +215,3 @@ if __name__ == "__main__":
     jaccard_matrix = jaccard_coefficients("kmeans.txt", "agglomerative.txt", optim_clusters)
     for i in range(len(jaccard_matrix)):
         print(f'jaccard_similarities for cluster {i} : {jaccard_matrix[i]}')
-
-
-
-
