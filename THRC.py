@@ -1,86 +1,77 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
+from scipy.cluster.hierarchy import fcluster, linkage
 import os
 
 # # Take data from a file
 def get_data(filepath):
-    return  pd.read_csv(filepath)
+    return pd.read_csv(filepath)
 
 # Calculating cosine similarity
 def cosine_similarity(x, y):
-    if (np.linalg.norm(x) * np.linalg.norm(y)) == 0:
+    if np.linalg.norm(x) * np.linalg.norm(y) == 0:
         return 0.0
     return 1 - np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
 
 # K-means Clustering
 def k_means(n_clusters, df):
-    # Number of clusters
     k = n_clusters
 
     # Randomly initializing k points
-    init_points = (df.sample(n=k))
-
-    mean_points = []
-    for i in init_points.values:
-        mean_points.append(i[1:11].tolist())
+    init_points = df.sample(n=k)
+    means = init_points.values.tolist()
 
     # Running K-means 20 times
-    final_clusters = [[] for j in range(k)]
-    y = [[] for j in range(k)]
-    for i in range(20):
-        clusters = [[] for j in range(k)]
+    final_clusters = [[] for _ in range(k)]
+    for _ in range(20):
+        clusters = [[] for _ in range(k)]
         for point in df.values:
-            distances = [cosine_similarity(point[1:11], mean) for mean in mean_points]
+            distances = [cosine_similarity(point[1:11], mean) for mean in means]
             nearest_mean_index = np.argmax(distances)
             clusters[nearest_mean_index].append(point)
-            y[nearest_mean_index].append(point[1:11].tolist())
-
         for j in range(k):
             if len(clusters[j]) > 0:
-                mean_points[j]=np.mean(y[j], axis=0)
-        final_clusters = clusters
+                means[j] = np.mean([point[1:11] for point in clusters[j]], axis=0)
     return final_clusters
 
 
 # Calculation of Silhouette Coefficient for each sample
 def silhouette_coefficient(n_clusters, final_clusters, df):
     s = 0
-    k = n_clusters
-    silhouette_coeff = 0
     for i in range(len(df)):
-        cluster_index = -1
-        for j in range(k):
-            if tuple(df.values[i]) in [tuple(x) for x in final_clusters[j]]:
+        cluster_index = None
+        for j in range(n_clusters):
+            if df.values[i] in final_clusters[j]:
                 cluster_index = j
                 break
-        if cluster_index == -1:
-            continue
+        if cluster_index is not None and cluster_index != -1:
+            # Calculating a
+            a = 0
+            dist_a = [cosine_similarity(df.values[i][1:11], other_pts[1:11]) for other_pts in final_clusters[cluster_index] if not np.array_equal(df.values[i], other_pts)]
+            if len(dist_a) > 0:
+                a = np.mean(dist_a)
 
-        # Calculating a
-        a = 0
-        dist_a = [cosine_similarity(df.values[i][1:11], other_pts[1:11]) for other_pts in final_clusters[cluster_index] if
-                     not np.array_equal(df.values[i], other_pts)]
-        if len(dist_a) > 0:
-            a = np.mean(dist_a)
+            # Calculating b
+            cluster_labels = fcluster(linkage(df.values[:, 1:11], method='ward'), n_clusters, criterion='maxclust')
+            b = np.inf
+            dist_b = []
+            points_in_cluster = []
+            for j in range(1, n_clusters+1):
+                for point in final_clusters[cluster_labels == j]:
+                    dist = cosine_similarity(df.values[i][1:11], point[1:11])
+                    dist_b.append(dist)
+                    points_in_cluster.append(point)
+                    if len(dist_b) > 0:
+                        if dist_mean(dist_b) < b:
+                            b = dist_mean(dist_b)
+                        if len(points_in_cluster) > len([p for p in points_in_cluster if np.array_equal(p, df.values[i]) == False]):
+                            dist_b = []
+                            b = np.inf
+            if a != 0 and b != np.inf:
+                s = (b - a) / max(a, b)
 
-        # Calculating b
-        b = np.inf
-        dist_b = []
-        for j in range(k):
-            if j == cluster_index:
-                continue
-            for other_pts in final_clusters[j]:
-                dist = cosine_similarity(df.values[i][1:11], other_pts[1:11])
-                dist_b.append(dist)
-            if len(dist_b) > 0:
-                if np.mean(dist_b) < b:
-                    b = np.mean(dist_b)
-        if a != 0 and b != np.inf:
-            s = (b - a) / max(a, b)
-
-        silhouette_coeff += s
-    silhouette_coeff /= len(df.values)
+        silhouette_coeff += s / len(df.values)
     return silhouette_coeff
 
 
@@ -103,11 +94,10 @@ def kmeans_to_file(n_clusters, final_clusters, filename):
 
 
 def agglomerative_clustering(n_clusters, df):
-    # Single Linkage Agglomerative Hierarchical Clustering
-    k = n_clusters
     cosine_distances = squareform(pdist(df.values[:, 1:11], metric='cosine'))
 
     clusters = [[i] for i in range(len(df.values))]
+    k = min(n_clusters, len(df.values))
     while len(clusters) > k:
         min_dist = np.inf
         merge_cluster_index1 = -1
@@ -149,32 +139,36 @@ def jaccard_coefficients(file1, file2, n_clusters):
     except OSError:
         pass
 
-
-    # Reading data from kmeans.txt and storing it in result1
+    result1 = []
     with open('results/kmeans.txt', "r") as f:
         lines = [line.strip().split(",") for line in f.readlines()]
-    for i in range(len(lines)):
-        if lines[i][0] == '':
-            lines[i][0] = '981'
-    result1 = [[int(x) for x in line] for line in lines]
-    if os.path.exists(file1):
+    for line in lines:
+        if line[0] == '':
+            line[0] = '981'
+        result1.append([int(x) for x in line])
+
+    try:
         os.remove(file1)
-    kmeans_to_file(n_clusters,clusters_dict[n_clusters],"kmeans.txt")
+    except OSError:
+        pass
+    kmeans_to_file(n_clusters,clusters[n_clusters],"kmeans.txt")
 
 
-    # Reading data from agglomerative.txt and storing it in result1
+    result2 = []
     with open('results/agglomerative.txt', "r") as f:
         lines = [line.strip().split(",") for line in f.readlines()]
-    for i in range(len(lines)):
-        if lines[i][0] == '':
-            lines[i][0] = '981'
-    result2 = [[int(x) for x in line] for line in lines]
-    if os.path.exists(file2):
+    for line in lines:
+        if line[0] == '':
+            line[0] = '981'
+        result2.append([int(x) for x in line])
+
+    try:
         os.remove(file2)
-    agglomerative_to_file(n_clusters,agglo_clusters[n_clusters],"agglomerative.txt")
+    except OSError:
+        pass
+    agglomerative_to_file(n_clusters,clusters[n_clusters],"agglomerative.txt")
 
 
-    # Calculating Jaccard Similarity for each corresponding cluster
     jaccard_list = []
     for i in range(n_clusters):
         jaccard_similarities = []
@@ -197,21 +191,22 @@ def jaccard_coefficients(file1, file2, n_clusters):
 
 if __name__ == "__main__":
     df = get_data('travel.csv')
-    clusters_dict = {}
+    clusters = {}
     max_silhouette = -2
     optim_clusters = -1
     for i in range(3, 7):
-        clusters_dict[i] = k_means(n_clusters=i, df=df)
-        silhouette_value = silhouette_coefficient(n_clusters=i, final_clusters=clusters_dict[i], df=df)
-        print(f'k={i}')
-        print(f'The Silhouette Coefficient is : {silhouette_value}')
-        if silhouette_value > max_silhouette:
-            max_silhouette = silhouette_value
-            optim_clusters = i
+        clusters[i] = k_means(n_clusters=i, df=df)
+        silhouette_value = silhouette_coefficient(n_clusters=i, final_clusters=clusters[i], df=df)
+        if silhouette_value > 0:
+            print(f'k={i}')
+            print(f'The Silhouette Coefficient is : {silhouette_value}')
+            if silhouette_value > max_silhouette:
+                max_silhouette = silhouette_value
+                optim_clusters = i
     print(f'The optimal value is :\nk = {optim_clusters}')
-    kmeans_to_file(optim_clusters,clusters_dict[optim_clusters],"kmeans.txt")
-    agglo_clusters = agglomerative_clustering(optim_clusters,df)
-    agglomerative_to_file(optim_clusters,agglo_clusters,"agglomerative.txt")
+    kmeans_to_file(optim_clusters,clusters[optim_clusters],"kmeans.txt")
+    clusters[optim_clusters] = agglomerative_clustering(optim_clusters,df)
+    agglomerative_to_file(optim_clusters,clusters[optim_clusters],"agglomerative.txt")
     jaccard_matrix = jaccard_coefficients("kmeans.txt", "agglomerative.txt", optim_clusters)
     for i in range(len(jaccard_matrix)):
         print(f'jaccard_similarities for cluster {i} : {jaccard_matrix[i]}')
