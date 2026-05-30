@@ -1,17 +1,10 @@
-import numpy as np
-import pandas as pd
-from scipy.spatial.distance import pdist, squareform
-import os
-
-# # Take data from a file
-def get_data(filepath):
-    return  pd.read_csv(filepath)
-
-# Calculating cosine similarity
 def cosine_similarity(x, y):
-    return 1 - np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
+    x_norm = np.linalg.norm(x)
+    y_norm = np.linalg.norm(y)
+    if x_norm == 0 or y_norm == 0:
+        return 0  # or some other default value
+    return 1 - np.dot(x, y) / (x_norm * y_norm)
 
-# K-means Clustering
 def k_means(n_clusters, df):
     # Number of clusters
     k = n_clusters
@@ -36,7 +29,7 @@ def k_means(n_clusters, df):
 
         for j in range(k):
             if len(clusters[j]) > 0:
-                mean_points[j]=np.mean(y[j], axis=0)
+                mean_points[j] = np.mean(y[j], axis=0)
         final_clusters = clusters
     return final_clusters
 
@@ -181,7 +174,10 @@ def jaccard_coefficients(file1, file2, n_clusters):
             B = set(result2[j])
             intersection = len(A.intersection(B))
             union = len(A.union(B))
-            jaccard_similarity = intersection / union
+            if union != 0:
+                jaccard_similarity = intersection / union
+            else:
+                jaccard_similarity = 0
             jaccard_similarities.append(jaccard_similarity)
         jaccard_list.append(jaccard_similarities)
 
