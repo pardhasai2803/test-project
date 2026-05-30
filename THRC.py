@@ -9,8 +9,6 @@ def get_data(filepath):
 
 # Calculating cosine similarity
 def cosine_similarity(x, y):
-    if (np.linalg.norm(x) * np.linalg.norm(y)) == 0:
-        return 0.0
     return 1 - np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
 
 # K-means Clustering
