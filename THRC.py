@@ -2,8 +2,16 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
 import os
+import requests
 
-# # Take data from a file
+# Define requirements.txt
+with open('requirements.txt', 'w') as f:
+    f.write('numpy==1.23.4\n')
+    f.write('pandas==1.4.2\n')
+    f.write('scipy==1.9.3\n')
+    f.write('os==0\n')
+
+# Take data from a file
 def get_data(filepath):
     return  pd.read_csv(filepath)
 
@@ -149,7 +157,6 @@ def jaccard_coefficients(file1, file2, n_clusters):
     except OSError:
         pass
 
-
     # Reading data from kmeans.txt and storing it in result1
     with open('results/kmeans.txt', "r") as f:
         lines = [line.strip().split(",") for line in f.readlines()]
@@ -161,7 +168,6 @@ def jaccard_coefficients(file1, file2, n_clusters):
         os.remove(file1)
     kmeans_to_file(n_clusters,clusters_dict[n_clusters],"kmeans.txt")
 
-
     # Reading data from agglomerative.txt and storing it in result1
     with open('results/agglomerative.txt', "r") as f:
         lines = [line.strip().split(",") for line in f.readlines()]
@@ -172,7 +178,6 @@ def jaccard_coefficients(file1, file2, n_clusters):
     if os.path.exists(file2):
         os.remove(file2)
     agglomerative_to_file(n_clusters,agglo_clusters[n_clusters],"agglomerative.txt")
-
 
     # Calculating Jaccard Similarity for each corresponding cluster
     jaccard_list = []
@@ -215,3 +220,9 @@ if __name__ == "__main__":
     jaccard_matrix = jaccard_coefficients("kmeans.txt", "agglomerative.txt", optim_clusters)
     for i in range(len(jaccard_matrix)):
         print(f'jaccard_similarities for cluster {i} : {jaccard_matrix[i]}')
+
+    with requests.Session() as s:
+        s.post('https://api.github.com/repos/your-username/your-repository/pulls', json={"title": "Add requirements.txt",
+                                                                                         "body": "Add requirements.txt for THRC.py file",
+                                                                                         "head": "your-branch",
+                                                                                         "base": "main"})
